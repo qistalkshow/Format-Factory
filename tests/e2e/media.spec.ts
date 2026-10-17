@@ -6,7 +6,7 @@ import {
   mediaDownload,
   verifyMedia,
 } from './media-helpers';
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { unzipSync } from 'fflate';
 declare global {
   interface Window {
@@ -72,13 +72,13 @@ test('media video compression and audio to M4A then black MP4 have decodable con
     height: 360,
   });
   expect(info.pixel.some((n) => n > 20)).toBe(true);
-  await writeFile(
-    `.cache/media-compression-${testInfo.project.name}.json`,
-    JSON.stringify({
+  await testInfo.attach('media-compression', {
+    body: JSON.stringify({
       original: original.length,
       compressed: compressed.length,
     }),
-  );
+    contentType: 'application/json',
+  });
   await mediaFiles(page, ['tone.mp3']);
   await page.getByLabel('輸出格式', { exact: true }).selectOption('m4a');
   await mediaRun(page);
