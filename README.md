@@ -204,3 +204,11 @@ PDF → DOCX 提供「Word 版面模式」：
 相關修正也涵蓋 DOCX → PDF 的段落／簡單表格混合字體樣式與一致分節的紙張／邊界，以及 XLSX → PDF 的儲存格基本粗斜體、底線與上下標。XLSX 的欄寬、合併儲存格、數字顯示格式與 PDF → XLSX 的格式重建仍有限制，不能當成保真轉換。PPTX 文字段落亦保留混合粗斜體、底線、上下標與直接指定的文字顏色；仍只支援簡單版型，同段落混合字級、主題繼承及表格的細部格式仍不完整。
 
 沒有新增相依、WASM、遠端資源或服務。新增自製格式測試資料可用 `node scripts/create-format-fixtures.mjs` 重建；回歸測試為 `tests/unit/office-format.test.ts` 與 `tests/e2e/office-format.spec.ts`。API 依照鎖定版本的 [docx 文件](https://docx.js.org/api/) 與 [PDF.js API](https://mozilla.github.io/pdf.js/api/)；底線推定使用鎖定 PDF.js 6 的 operator list，升級時需重跑格式測試。
+
+## 其他功能優化（2026-10-17）
+
+- XLSX → PDF 改用儲存格的數字顯示格式，保留百分比、金額、日期、前導零與分數；公式只使用檔內既有結果，不執行公式。隱藏列／欄不輸出；依來源欄寬比例排版，超過頁面時縮小欄寬。欄寬為系統字型下的近似換算；合併儲存格、完整列印設定、主題及條件格式仍不保證。未指定的日期語系使用英文，明確指定的數字格式優先。
+- PPTX → PDF 保留同段落混合字級、水平／垂直對齊、文字方塊內距，以及簡單表格的列高／欄寬與基本行內樣式。表格依實際列高更新外框，與本機 PowerPoint 對自製 fixture 的解讀一致。空白線條設定不再額外畫出文字方塊邊框。主題繼承、合併表格、複雜圖形及自動縮字仍有限制；放不下的內容會明確拒絕，不默默截斷。
+- PDF 離線資源最多同時下載 4 個，影音最多 2 個；下載時逐塊讀取，避免額外保留完整 WASM 副本。開始下載前驗證整份清單皆為本站路徑；失敗或取消會停止其餘下載。轉換佇列仍只執行一個重任務。
+
+新增 `numfmt 4.0.1`，用於 Excel 數字格式，MIT、無執行期相依／安裝腳本，純本機執行。完整瀏覽器 ESM gzip 46,534 B；實際 tree-shaking 後含轉換程式的 XLSX 匯入 chunk gzip 34,103 B，僅按需載入。詳見 [官方文件](https://github.com/borgar/numfmt) 與 THIRD_PARTY_LICENSES.md。沒有新增 WASM 或遠端服務。

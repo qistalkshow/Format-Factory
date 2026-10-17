@@ -74,6 +74,10 @@ const doc = new Document({
 await writeFile('tests/fixtures/formatting.docx', await Packer.toBuffer(doc));
 const book = new ExcelJS.Workbook();
 const sheet = book.addWorksheet('Formatting');
+sheet.getColumn(1).width = 42;
+sheet.getColumn(2).width = 18;
+sheet.getColumn(3).hidden = true;
+sheet.getCell('C2').value = 'HIDDEN';
 sheet.getCell('A1').value = {
   richText: [
     { text: 'Normal ' },
@@ -84,24 +88,60 @@ sheet.getCell('A1').value = {
     { text: '2', font: { vertAlign: 'superscript' } },
   ],
 };
+for (const [index, [label, value, format]] of [
+  ['Percentage', 0.125, '0.00%'],
+  ['Currency', 1234.5, '$#,##0.00'],
+  ['Date', new Date('2026-10-17T00:00:00Z'), 'yyyy-mm-dd'],
+  ['Leading zeros', 7, '0000'],
+  ['Fraction', 1.5, '# ?/?'],
+].entries()) {
+  sheet.getCell(index + 2, 1).value = label;
+  const cell = sheet.getCell(index + 2, 2);
+  cell.value = value;
+  cell.numFmt = format;
+}
 await writeFile(
   'tests/fixtures/formatting.xlsx',
   Buffer.from(await book.xlsx.writeBuffer()),
 );
 const presentation = new pptxgen();
-presentation
-  .addSlide()
-  .addText(
+const slide = presentation.addSlide();
+slide.addText(
+  [
+    { text: 'Normal ' },
+    { text: 'Bold ', options: { bold: true } },
+    { text: 'Italic ', options: { italic: true } },
+    { text: 'Underlined ', options: { underline: true } },
+    { text: 'x' },
+    { text: '2', options: { superscript: true } },
+  ],
+  { x: 0.75, y: 0.75, w: 8, h: 1, fontSize: 24 },
+);
+slide.addText(
+  [
+    { text: 'Small ', options: { fontSize: 12 } },
+    { text: 'LARGE', options: { fontSize: 32, bold: true } },
+  ],
+  { x: 0.75, y: 2, w: 8, h: 0.8, align: 'center', valign: 'middle' },
+);
+slide.addTable(
+  [
     [
-      { text: 'Normal ' },
-      { text: 'Bold ', options: { bold: true } },
-      { text: 'Italic ', options: { italic: true } },
-      { text: 'Underlined ', options: { underline: true } },
-      { text: 'x' },
-      { text: '2', options: { superscript: true } },
+      { text: 'Short', options: { bold: true } },
+      { text: 'Wider column', options: { italic: true } },
     ],
-    { x: 0.75, y: 0.75, w: 8, h: 1, fontSize: 24 },
-  );
+    ['Row two', { text: 'Underlined cell', options: { underline: true } }],
+  ],
+  {
+    x: 0.75,
+    y: 3.2,
+    w: 6,
+    colW: [2, 4],
+    rowH: 0.6,
+    fontSize: 14,
+    margin: 0.05,
+  },
+);
 await writeFile(
   'tests/fixtures/formatting.pptx',
   await presentation.write({ outputType: 'nodebuffer' }),

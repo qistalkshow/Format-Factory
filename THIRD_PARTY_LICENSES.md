@@ -6,31 +6,32 @@
 
 gzip 封裝體積由 npm 官方 registry 的 npm pack 套件@版本 --dry-run --json 所回傳 size 取得，表示 .tgz 的壓縮大小，**不是瀏覽器 bundle 大小**，也不包含間接相依。開發相依全部只於本機／CI 執行，正式網站傳輸貢獻為 0 B。
 
-| 套件              | 版本    | 授權             | npm gzip 封裝大小 | 用途                                              |
-| ----------------- | ------- | ---------------- | ----------------: | ------------------------------------------------- |
-| preact            | 10.29.8 | MIT              |         407,547 B | 元件、Hooks、JSX runtime                          |
-| vite              | 8.3.1   | MIT              |         586,488 B | 開發伺服器與產物切割／建置                        |
-| vitest            | 5.0.2   | MIT              |         690,055 B | 核心與 Worker 邊界單元測試                        |
-| eslint            | 10.11.0 | MIT              |         627,973 B | 程式碼靜態檢查                                    |
-| @eslint/js        | 10.0.1  | MIT              |           4,193 B | ESLint 官方 JavaScript 規則                       |
-| typescript-eslint | 8.71.0  | MIT              |           9,373 B | TypeScript ESLint parser／規則整合                |
-| prettier          | 3.9.9   | MIT              |       2,801,547 B | 格式化與格式檢查                                  |
-| @playwright/test  | 1.63.0  | Apache-2.0       |           8,749 B | E2E、瀏覽器自動化及隱私檢查                       |
-| @types/node       | 26.6.3  | MIT              |         470,935 B | 建置與測試工具 Node.js 型別                       |
-| typescript        | 6.0.3   | Apache-2.0       |       4,515,854 B | strict 型別檢查                                   |
-| @jsquash/jpeg     | 1.6.0   | Apache-2.0       |         157,933 B | Worker 中的 MozJPEG WASM 編碼                     |
-| @jsquash/oxipng   | 2.3.0   | Apache-2.0       |         192,200 B | Worker 中的單執行緒 PNG 無損最佳化                |
-| imagetracerjs     | 1.2.6   | Unlicense        |       3,079,354 B | Worker 中的近似向量描摹                           |
-| fflate            | 0.8.3   | MIT              |         173,034 B | Worker 中打包 ZIP                                 |
-| pdf-lib           | 1.17.1  | MIT              |       4,226,739 B | Worker 中保留原頁面合併／分割與建立影像 PDF       |
-| pdfjs-dist        | 6.3.289 | Apache-2.0       |       8,503,425 B | Worker 中解析 PDF、密碼處理與頁面渲染             |
-| pptxgenjs         | 4.0.1   | MIT              |         813,698 B | Worker 中建立每頁圖片版 PPTX                      |
-| @ffmpeg/ffmpeg    | 0.12.15 | MIT              |          18,455 B | 影音 Worker 通訊與核心載入（MIT 包裝層）          |
-| @ffmpeg/core      | 0.12.10 | GPL-2.0-or-later |      20,634,719 B | 單執行緒影音解碼、編碼與壓縮（GPL 核心）          |
-| docx              | 9.12.0  | MIT              |       4,938,882 B | Worker 中建立可編輯 DOCX                          |
-| exceljs           | 4.4.0   | MIT              |       4,716,975 B | Worker 中讀寫 XLSX 與公式快取值                   |
-| mammoth           | 1.13.0  | BSD-2-Clause     |         438,003 B | Worker 中將 DOCX 轉為簡化 HTML，禁止外部檔案      |
-| @xmldom/xmldom    | 0.9.12  | MIT              |         109,708 B | Worker 中解析 OOXML 與隔離的 HTML，不插入頁面 DOM |
+| 套件              | 版本    | 授權             | npm gzip 封裝大小 | 用途                                                         |
+| ----------------- | ------- | ---------------- | ----------------: | ------------------------------------------------------------ |
+| preact            | 10.29.8 | MIT              |         407,547 B | 元件、Hooks、JSX runtime                                     |
+| vite              | 8.3.1   | MIT              |         586,488 B | 開發伺服器與產物切割／建置                                   |
+| vitest            | 5.0.2   | MIT              |         690,055 B | 核心與 Worker 邊界單元測試                                   |
+| eslint            | 10.11.0 | MIT              |         627,973 B | 程式碼靜態檢查                                               |
+| @eslint/js        | 10.0.1  | MIT              |           4,193 B | ESLint 官方 JavaScript 規則                                  |
+| typescript-eslint | 8.71.0  | MIT              |           9,373 B | TypeScript ESLint parser／規則整合                           |
+| prettier          | 3.9.9   | MIT              |       2,801,547 B | 格式化與格式檢查                                             |
+| @playwright/test  | 1.63.0  | Apache-2.0       |           8,749 B | E2E、瀏覽器自動化及隱私檢查                                  |
+| @types/node       | 26.6.3  | MIT              |         470,935 B | 建置與測試工具 Node.js 型別                                  |
+| typescript        | 6.0.3   | Apache-2.0       |       4,515,854 B | strict 型別檢查                                              |
+| @jsquash/jpeg     | 1.6.0   | Apache-2.0       |         157,933 B | Worker 中的 MozJPEG WASM 編碼                                |
+| @jsquash/oxipng   | 2.3.0   | Apache-2.0       |         192,200 B | Worker 中的單執行緒 PNG 無損最佳化                           |
+| imagetracerjs     | 1.2.6   | Unlicense        |       3,079,354 B | Worker 中的近似向量描摹                                      |
+| fflate            | 0.8.3   | MIT              |         173,034 B | Worker 中打包 ZIP                                            |
+| pdf-lib           | 1.17.1  | MIT              |       4,226,739 B | Worker 中保留原頁面合併／分割與建立影像 PDF                  |
+| pdfjs-dist        | 6.3.289 | Apache-2.0       |       8,503,425 B | Worker 中解析 PDF、密碼處理與頁面渲染                        |
+| pptxgenjs         | 4.0.1   | MIT              |         813,698 B | Worker 中建立每頁圖片版 PPTX                                 |
+| @ffmpeg/ffmpeg    | 0.12.15 | MIT              |          18,455 B | 影音 Worker 通訊與核心載入（MIT 包裝層）                     |
+| @ffmpeg/core      | 0.12.10 | GPL-2.0-or-later |      20,634,719 B | 單執行緒影音解碼、編碼與壓縮（GPL 核心）                     |
+| docx              | 9.12.0  | MIT              |       4,938,882 B | Worker 中建立可編輯 DOCX                                     |
+| exceljs           | 4.4.0   | MIT              |       4,716,975 B | Worker 中讀寫 XLSX 與公式快取值                              |
+| mammoth           | 1.13.0  | BSD-2-Clause     |         438,003 B | Worker 中將 DOCX 轉為簡化 HTML，禁止外部檔案                 |
+| @xmldom/xmldom    | 0.9.12  | MIT              |         109,708 B | Worker 中解析 OOXML 與隔離的 HTML，不插入頁面 DOM            |
+| numfmt            | 4.0.1   | MIT              |         301,687 B | Worker 中依 Excel 數字格式顯示百分比、金額、日期與公式快取值 |
 
 Preact 的瀏覽器程式碼包含核心、hooks 與 JSX runtime，未合併時分別 gzip 為 4,836／1,546／985 B。實際合併與 tree-shaking 後體積以 npm run size-check 為準，不能把 .tgz 封裝大小當成首屏傳輸量。其 MIT 版權全文同時放於 public/THIRD_PARTY_NOTICES.txt，隨網站自託管。
 
@@ -333,6 +334,7 @@ Preact 的瀏覽器程式碼包含核心、hooks 與 JSX runtime，未合併時�
 | nanoid                                                          | 3.3.19   | MIT                       |
 | natural-compare                                                 | 1.4.0    | MIT                       |
 | normalize-path                                                  | 3.0.0    | MIT                       |
+| numfmt                                                          | 4.0.1    | MIT                       |
 | object-inspect                                                  | 1.13.4   | MIT                       |
 | object-keys                                                     | 1.1.1    | MIT                       |
 | object.assign                                                   | 4.1.7    | MIT                       |

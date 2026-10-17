@@ -6,6 +6,7 @@ const packs = JSON.parse(
   await readFile('scripts/dependency-sizes.json', 'utf8'),
 );
 const purposes = {
+  numfmt: 'Worker 中依 Excel 數字格式顯示百分比、金額、日期與公式快取值',
   docx: 'Worker 中建立可編輯 DOCX',
   exceljs: 'Worker 中讀寫 XLSX 與公式快取值',
   mammoth: 'Worker 中將 DOCX 轉為簡化 HTML，禁止外部檔案',

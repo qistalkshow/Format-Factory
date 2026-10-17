@@ -7,9 +7,9 @@ import {
   childElements,
   relationships,
 } from './archive';
-import { OFFICE_LIMITS, type InlineText } from './model';
-import { styledLines, drawStyledLine } from './inline-text';
-import { canvasPdfPage, wrapText } from './pdf-office-layout';
+import { OFFICE_LIMITS } from './model';
+import { drawPptxText, pptxColor as color } from './pptx-text';
+import { canvasPdfPage } from './pdf-office-layout';
 import { officeBitmap } from './bitmap';
 const relation = (node: Element, name: string) =>
   node.getAttributeNS(
@@ -40,10 +40,6 @@ function box(shape: Element) {
   };
   if (result.w <= 0 || result.h <= 0) throw new Error('officeUnsupported');
   return result;
-}
-function color(node: Element | undefined, fallback: string) {
-  const value = node && elements(node, 'srgbClr')[0]?.getAttribute('val');
-  return value && /^[\da-f]{6}$/i.test(value) ? `#${value}` : fallback;
 }
 export async function pptxPdf(file: Blob, progress: (p: number) => void) {
   const archive = await openOffice(file, 'pptx'),
@@ -91,6 +87,20 @@ export async function pptxPdf(file: Blob, progress: (p: number) => void) {
         if (geometry && !['rect', 'roundRect'].includes(geometry))
           throw new Error('officeUnsupported');
         const b = box(shape);
+        const tableGeometry = elements(shape, 'tbl')[0];
+        if (tableGeometry) {
+          // PowerPoint 以實際列高／欄寬更新表格外框；來源外框可能尚未同步。
+          b.h = elements(tableGeometry, 'tr').reduce(
+            (sum, row) => sum + number(row, 'h') / 12700,
+            0,
+          );
+          b.w = elements(tableGeometry, 'gridCol').reduce(
+            (sum, col) => sum + number(col, 'w') / 12700,
+            0,
+          );
+          if (b.h <= 0 || b.w <= 0 || b.h > 3000 || b.w > 3000)
+            throw new Error('officeLimit');
+        }
         ctx.save();
         try {
           ctx.translate(b.x + b.w / 2, b.y + b.h / 2);
@@ -132,33 +142,54 @@ export async function pptxPdf(file: Blob, progress: (p: number) => void) {
           } else if (shape.localName === 'graphicFrame') {
             const table = elements(shape, 'tbl')[0];
             if (!table) throw new Error('officeUnsupported');
-            const rows = elements(table, 'tr').map((row) =>
-                elements(row, 'tc').map((cell) =>
-                  elements(cell, 't')
-                    .map((t) => t.textContent ?? '')
-                    .join(' '),
-                ),
-              ),
-              columns = Math.max(...rows.map((r) => r.length));
-            if (!rows.length || columns > 32 || rows.length > 100)
-              throw new Error('officeLimit');
-            ctx.font = '12px sans-serif';
-            ctx.textBaseline = 'top';
-            ctx.strokeStyle = '#555555';
-            ctx.fillStyle = '#111111';
-            rows.forEach((row, r) =>
-              row.forEach((text, c) => {
-                const cw = b.w / columns,
-                  rh = b.h / rows.length;
-                ctx.strokeRect(c * cw, r * rh, cw, rh);
-                const lines = wrapText(ctx, text, cw - 8);
-                if (lines.length * 16 > rh - 8)
-                  throw new Error('officeUnsupported');
-                lines.forEach((line, k) =>
-                  ctx.fillText(line, c * cw + 4, r * rh + 4 + k * 16),
-                );
-              }),
+            const rows = elements(table, 'tr');
+            const grid = elements(table, 'gridCol').map(
+              (col) => number(col, 'w') / 12700,
             );
+            if (
+              !rows.length ||
+              rows.length > 100 ||
+              !grid.length ||
+              grid.length > 32
+            )
+              throw new Error('officeLimit');
+            let rowY = 0;
+            for (const row of rows) {
+              const rowHeight = number(row, 'h') / 12700;
+              if (rowHeight <= 0 || rowY + rowHeight > b.h + 1)
+                throw new Error('officeUnsupported');
+              const cells = elements(row, 'tc');
+              if (cells.length !== grid.length)
+                throw new Error('officeUnsupported');
+              let cellX = 0;
+              for (const [column, cell] of cells.entries()) {
+                if (
+                  Number(cell.getAttribute('gridSpan') ?? 1) > 1 ||
+                  Number(cell.getAttribute('rowSpan') ?? 1) > 1 ||
+                  ['1', 'true'].includes(cell.getAttribute('hMerge') ?? '') ||
+                  ['1', 'true'].includes(cell.getAttribute('vMerge') ?? '')
+                )
+                  throw new Error('officeUnsupported');
+                const cellWidth = grid[column];
+                if (cellWidth <= 0 || cellX + cellWidth > b.w + 1)
+                  throw new Error('officeUnsupported');
+                ctx.save();
+                try {
+                  ctx.translate(cellX, rowY);
+                  const fill = elements(cell, 'tcPr')[0];
+                  ctx.fillStyle = color(fill, '#ffffff');
+                  ctx.fillRect(0, 0, cellWidth, rowHeight);
+                  ctx.strokeStyle = '#777777';
+                  ctx.lineWidth = 0.5;
+                  ctx.strokeRect(0, 0, cellWidth, rowHeight);
+                  drawPptxText(ctx, cell, cellWidth, rowHeight);
+                } finally {
+                  ctx.restore();
+                }
+                cellX += cellWidth;
+              }
+              rowY += rowHeight;
+            }
           } else {
             const properties = childElements(shape).find(
                 (e) => e.localName === 'spPr',
@@ -175,64 +206,12 @@ export async function pptxPdf(file: Blob, progress: (p: number) => void) {
             const line =
               properties &&
               childElements(properties).find((e) => e.localName === 'ln');
-            if (line && !elements(line, 'noFill').length) {
+            if (line && elements(line, 'solidFill').length) {
               ctx.strokeStyle = color(line, '#555555');
               ctx.lineWidth = 1;
               ctx.strokeRect(0, 0, b.w, b.h);
             }
-            let y = 4;
-            for (const paragraph of elements(shape, 'p')) {
-              const text = elements(paragraph, 't')
-                .map((t) => t.textContent ?? '')
-                .join('');
-              if (!text) continue;
-              const style =
-                  elements(paragraph, 'rPr')[0] ??
-                  elements(paragraph, 'defRPr')[0],
-                fontSize = Math.max(
-                  8,
-                  Math.min(96, number(style, 'sz', 1800) / 100),
-                );
-              ctx.font = `${style?.getAttribute('b') === '1' ? 'bold ' : ''}${fontSize}px sans-serif`;
-              ctx.fillStyle = color(style, '#111111');
-              ctx.textBaseline = 'top';
-              const fallback = elements(paragraph, 'defRPr')[0];
-              const runs: InlineText[] = childElements(paragraph)
-                .filter((run) =>
-                  ['r', 'fld', 'br'].includes(run.localName ?? ''),
-                )
-                .map((run) => {
-                  const properties = elements(run, 'rPr')[0];
-                  const attr = (name: string) =>
-                    properties?.getAttribute(name) ??
-                    fallback?.getAttribute(name);
-                  const baseline = Number(attr('baseline') ?? 0);
-                  return {
-                    text:
-                      run.localName === 'br'
-                        ? '\n'
-                        : elements(run, 't')
-                            .map((t) => t.textContent ?? '')
-                            .join(''),
-                    bold: attr('b') === '1',
-                    italic: attr('i') === '1',
-                    underline: Boolean(attr('u') && attr('u') !== 'none'),
-                    script:
-                      baseline > 0 ? 'sup' : baseline < 0 ? 'sub' : undefined,
-                    color: color(properties, color(fallback, '#111111')),
-                  };
-                });
-              for (const line of styledLines(
-                ctx,
-                runs.length ? runs : [{ text }],
-                fontSize,
-                Math.max(1, b.w - 8),
-              )) {
-                if (y + fontSize > b.h) throw new Error('officeUnsupported');
-                drawStyledLine(ctx, line, 4, y, fontSize);
-                y += fontSize * 1.2;
-              }
-            }
+            drawPptxText(ctx, shape, b.w, b.h);
           }
         } finally {
           ctx.restore();

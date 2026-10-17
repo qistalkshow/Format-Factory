@@ -113,5 +113,10 @@
     "name": "@xmldom/xmldom",
     "version": "0.9.12",
     "size": 109708
+  },
+  {
+    "name": "numfmt",
+    "version": "4.0.1",
+    "size": 301687
   }
 ]

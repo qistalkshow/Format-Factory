@@ -33,6 +33,7 @@ export interface TextLine {
 export interface InlineText {
   text: string;
   color?: string;
+  size?: number;
   bold?: boolean;
   italic?: boolean;
   underline?: boolean;
@@ -46,7 +47,12 @@ export type Block =
       bold?: boolean;
       runs?: InlineText[];
     }
-  | { kind: 'table'; rows: string[][]; runs?: InlineText[][][] }
+  | {
+      kind: 'table';
+      rows: string[][];
+      runs?: InlineText[][][];
+      widths?: number[];
+    }
   | { kind: 'image'; bytes: Uint8Array; mime: string }
   | { kind: 'break' };
 export function textLines(items: TextCell[]): TextLine[] {

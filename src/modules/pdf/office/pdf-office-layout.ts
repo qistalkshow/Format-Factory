@@ -2,6 +2,7 @@ import { officeBitmap } from './bitmap';
 import { PDFDocument } from 'pdf-lib';
 import { OFFICE_LIMITS, guardBlocks, type Block } from './model';
 import { styledLines, drawStyledLine } from './inline-text';
+import { columnWidths } from './table-widths';
 import type { FlowPage } from './docx-page';
 export function wrapText(
   ctx: OffscreenCanvasRenderingContext2D,
@@ -104,7 +105,14 @@ export async function flowPdf(
         for (let start = 0; start < columns; start += 6) {
           if (start) await flush();
           const count = Math.min(6, columns - start),
-            cw = usable / count;
+            widths = columnWidths(
+              block.widths?.slice(start, start + count) ??
+                Array.from({ length: count }, () => usable / count),
+              usable,
+            ),
+            offsets = widths.map((_, i) =>
+              widths.slice(0, i).reduce((a, b) => a + b, 0),
+            );
           for (const [rowIndex, row] of block.rows.entries()) {
             ctx.font = '10px sans-serif';
             const cells = Array.from({ length: count }, (_, i) =>
@@ -114,7 +122,7 @@ export async function flowPdf(
                   { text: row[start + i] ?? '' },
                 ],
                 10,
-                cw - 10,
+                widths[i] - 10,
               ),
             );
             const lineCount = Math.max(1, ...cells.map((c) => c.length));
@@ -131,14 +139,14 @@ export async function flowPdf(
               ctx.lineWidth = 0.5;
               ctx.fillStyle = '#111111';
               for (let col = 0; col < count; col++) {
-                ctx.strokeRect(margin + col * cw, y, cw, rh);
+                ctx.strokeRect(margin + offsets[col], y, widths[col], rh);
                 cells[col]
                   .slice(line, line + visible)
                   .forEach((text, k) =>
                     drawStyledLine(
                       ctx,
                       text,
-                      margin + col * cw + 5,
+                      margin + offsets[col] + 5,
                       y + 5 + k * 14,
                       10,
                     ),

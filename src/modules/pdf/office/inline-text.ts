@@ -42,7 +42,10 @@ export function styledLines(
   }[][] = [[]];
   let used = 0;
   for (const run of runs) {
-    const fontSize = run.script ? size * 0.7 : size;
+    const baseSize = run.size ?? size;
+    if (!Number.isFinite(baseSize) || baseSize < 1 || baseSize > 400)
+      throw new Error('officeUnsupported');
+    const fontSize = run.script ? baseSize * 0.7 : baseSize;
     const font = `${run.italic ? 'italic ' : ''}${run.bold || bold ? 'bold ' : ''}${fontSize}px sans-serif`;
     ctx.font = font;
     for (const char of run.text.replace(/\r\n?/g, '\n')) {
