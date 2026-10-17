@@ -1,0 +1,32 @@
+{
+  "id": "./",
+  "name": "FormatFactory · 檔案格式處理工廠",
+  "short_name": "FormatFactory",
+  "description": "純本機圖片、影音互轉與壓縮，以及 PDF／Office 工具",
+  "lang": "zh-TW",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b1420",
+  "theme_color": "#0b1420",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "verified": true,
+  "reason": "19 source archives audited against v12.15 recipe, source history and runtime configuration; see public/media-licenses/README.txt for evidence and reproducibility limits.",
+  "manifest": {
+    "path": "source-manifest.json",
+    "sha256": "ba1e157b1557249b5a39bda17cc88bb668e7d5500ceffe8e0d8992ac17ca8466"
+  }
+}

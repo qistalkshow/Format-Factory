@@ -1,0 +1,117 @@
+[
+  {
+    "name": "preact",
+    "version": "10.29.8",
+    "size": 407547
+  },
+  {
+    "name": "vite",
+    "version": "8.3.1",
+    "size": 586488
+  },
+  {
+    "name": "vitest",
+    "version": "5.0.2",
+    "size": 690055
+  },
+  {
+    "name": "eslint",
+    "version": "10.11.0",
+    "size": 627973
+  },
+  {
+    "name": "@eslint/js",
+    "version": "10.0.1",
+    "size": 4193
+  },
+  {
+    "name": "typescript-eslint",
+    "version": "8.71.0",
+    "size": 9373
+  },
+  {
+    "name": "prettier",
+    "version": "3.9.9",
+    "size": 2801547
+  },
+  {
+    "name": "@playwright/test",
+    "version": "1.63.0",
+    "size": 8749
+  },
+  {
+    "name": "@types/node",
+    "version": "26.6.3",
+    "size": 470935
+  },
+  {
+    "name": "typescript",
+    "version": "6.0.3",
+    "size": 4515854
+  },
+  {
+    "name": "@jsquash/jpeg",
+    "version": "1.6.0",
+    "size": 157933
+  },
+  {
+    "name": "@jsquash/oxipng",
+    "version": "2.3.0",
+    "size": 192200
+  },
+  {
+    "name": "imagetracerjs",
+    "version": "1.2.6",
+    "size": 3079354
+  },
+  {
+    "name": "fflate",
+    "version": "0.8.3",
+    "size": 173034
+  },
+  {
+    "name": "pdf-lib",
+    "version": "1.17.1",
+    "size": 4226739
+  },
+  {
+    "name": "pdfjs-dist",
+    "version": "6.3.289",
+    "size": 8503425
+  },
+  {
+    "name": "pptxgenjs",
+    "version": "4.0.1",
+    "size": 813698
+  },
+  {
+    "name": "@ffmpeg/ffmpeg",
+    "version": "0.12.15",
+    "size": 18455
+  },
+  {
+    "name": "@ffmpeg/core",
+    "version": "0.12.10",
+    "size": 20634719
+  },
+  {
+    "name": "docx",
+    "version": "9.12.0",
+    "size": 4938882
+  },
+  {
+    "name": "exceljs",
+    "version": "4.4.0",
+    "size": 4716975
+  },
+  {
+    "name": "mammoth",
+    "version": "1.13.0",
+    "size": 438003
+  },
+  {
+    "name": "@xmldom/xmldom",
+    "version": "0.9.12",
+    "size": 109708
+  }
+]

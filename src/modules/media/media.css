@@ -1,0 +1,65 @@
+.media-workspace {
+  margin-block: 1.5rem;
+  overflow-wrap: anywhere;
+}
+.media-controls {
+  border: 0;
+  padding: 0;
+  margin-block: 1rem;
+  min-width: 0;
+}
+.media-legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.media-controls label {
+  display: grid;
+  gap: 0.5rem;
+  margin-block: 1rem;
+}
+.media-controls input,
+.media-controls select {
+  min-height: 44px;
+  width: 100%;
+  min-width: 0;
+}
+.media-controls summary {
+  cursor: pointer;
+  min-height: 44px;
+  padding-block: 0.75rem;
+}
+.media-actions,
+.media-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.media-job {
+  border-top: 1px solid var(--line);
+  padding-block: 1rem;
+}
+.media-job h3 {
+  overflow-wrap: anywhere;
+}
+.media-job video,
+.media-job audio {
+  display: block;
+  width: 100%;
+  max-height: 360px;
+  margin-block: 1rem;
+}
+.media-job progress {
+  width: 100%;
+}
+.media-size {
+  font-family: monospace;
+}
+@media (min-width: 640px) {
+  .media-controls {
+    max-width: 36rem;
+  }
+}

@@ -1,0 +1,12 @@
+node_modules/
+dist/
+playwright-report/
+test-results/
+.cache/
+public/pdf-engine/
+public/media-engine/
+*.tsbuildinfo
+*.log
+
+public/media-licenses/app-source.zip
+public/media-licenses/app-source.json

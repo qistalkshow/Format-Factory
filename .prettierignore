@@ -1,0 +1,12 @@
+node_modules
+dist
+package-lock.json
+AGENTS.md
+playwright-report
+test-results
+.cache
+public/pdf-engine
+public/media-engine
+
+public/media-licenses/app-source.zip
+public/media-licenses/app-source.json
