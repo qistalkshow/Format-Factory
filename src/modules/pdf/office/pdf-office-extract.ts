@@ -1,5 +1,6 @@
 import type { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist';
 import { textLines, OFFICE_LIMITS, type TextLine } from './model';
+import { markUnderlines } from './pdf-underlines';
 interface PdfImage {
   width: number;
   height: number;
@@ -7,11 +8,16 @@ interface PdfImage {
   bitmap?: ImageBitmap;
   kind?: number;
 }
-export async function pageText(page: PDFPageProxy): Promise<TextLine[]> {
+export async function pageText(
+  page: PDFPageProxy,
+  ops?: Record<string, number>,
+): Promise<TextLine[]> {
   const view = page.getViewport({ scale: 1 }),
     content = await page.getTextContent();
+  // Operator list 會解析字型；文字樣式中的 fontFamily 常只有通用替代字型。
+  const list = await page.getOperatorList();
   let length = 0;
-  return textLines(
+  const lines = textLines(
     content.items.flatMap((item) => {
       if (!('str' in item)) return [];
       length += item.str.length;
@@ -20,6 +26,15 @@ export async function pageText(page: PDFPageProxy): Promise<TextLine[]> {
         item.transform[4],
         item.transform[5],
       );
+      const font: unknown = page.commonObjs.has(item.fontName)
+        ? page.commonObjs.get(item.fontName)
+        : undefined;
+      const data =
+        font && typeof font === 'object'
+          ? (font as { name?: string; bold?: boolean; italic?: boolean })
+          : undefined;
+      const name =
+        data?.name ?? content.styles[item.fontName]?.fontFamily ?? '';
       return [
         {
           text: item.str,
@@ -27,31 +42,73 @@ export async function pageText(page: PDFPageProxy): Promise<TextLine[]> {
           y,
           width: item.width,
           size: Math.max(1, Math.hypot(item.transform[2], item.transform[3])),
-          bold: /bold|black|demi/i.test(
-            content.styles[item.fontName]?.fontFamily ?? '',
-          ),
+          bold: data?.bold || /bold|black|demi/i.test(name),
+          italic: data?.italic || /italic|oblique/i.test(name),
+          font: name
+            .replace(/^[A-Z]{6}\+/, '')
+            .replace(/[-,](Bold|Italic|Oblique|Regular).*/i, ''),
         },
       ];
     }),
   );
+  if (ops) markUnderlines(lines, list, ops, view);
+  return lines;
 }
 export async function pageImages(
   page: PDFPageProxy,
   ops: Record<string, number>,
-): Promise<Uint8Array[]> {
+): Promise<
+  { bytes: Uint8Array; x: number; y: number; width: number; height: number }[]
+> {
   const list = await page.getOperatorList(),
-    images: Uint8Array[] = [];
-  const seen = new Set<string>();
+    images: {
+      bytes: Uint8Array;
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    }[] = [];
+  const view = page.getViewport({ scale: 1 });
+  let matrix = new DOMMatrix();
+  const stack: DOMMatrix[] = [];
   let total = 0;
   for (let i = 0; i < list.fnArray.length; i++) {
+    const op = list.fnArray[i],
+      args = list.argsArray[i];
+    if (op === ops.save || op === ops.paintFormXObjectBegin)
+      stack.push(DOMMatrix.fromMatrix(matrix));
+    if (op === ops.restore || op === ops.paintFormXObjectEnd)
+      matrix = stack.pop() ?? new DOMMatrix();
+    if (op === ops.transform)
+      matrix = matrix.multiply(new DOMMatrix(args as number[]));
+    if (op === ops.paintFormXObjectBegin && args[0])
+      matrix = matrix.multiply(new DOMMatrix(args[0] as number[]));
+    const placements = [matrix];
     let image: PdfImage | undefined;
     if (
       list.fnArray[i] === ops.paintImageXObject ||
       list.fnArray[i] === ops.paintImageXObjectRepeat
     ) {
       const id: unknown = list.argsArray[i][0];
-      if (typeof id !== 'string' || seen.has(id)) continue;
-      seen.add(id);
+      if (typeof id !== 'string') continue;
+      if (op === ops.paintImageXObjectRepeat) {
+        placements.length = 0;
+        const positions = args[3] as number[];
+        if (positions.length > 200) throw new Error('officeLimit');
+        for (let p = 0; p < positions.length; p += 2)
+          placements.push(
+            matrix.multiply(
+              new DOMMatrix([
+                args[1],
+                0,
+                0,
+                args[2],
+                positions[p],
+                positions[p + 1],
+              ]),
+            ),
+          );
+      }
       image = await new Promise<PdfImage>((resolve) =>
         page.objs.get(id, resolve),
       );
@@ -99,7 +156,38 @@ export async function pageImages(
       );
       total += bytes.length;
       if (total > 64 * 1024 ** 2) throw new Error('officeLimit');
-      images.push(bytes);
+      for (const placement of placements) {
+        if (images.length >= 100) throw new Error('officeLimit');
+        const corners = [
+          [0, 0],
+          [1, 0],
+          [0, 1],
+          [1, 1],
+        ].map(([x, y]) => {
+          const point = placement.transformPoint({ x, y });
+          return view.convertToViewportPoint(point.x, point.y);
+        });
+        const xs = corners.map((p) => p[0]),
+          ys = corners.map((p) => p[1]);
+        if (
+          ![...xs, ...ys].every(
+            (v) => Number.isFinite(v) && Math.abs(v) <= 1584,
+          )
+        )
+          throw new Error('officeUnsupported');
+        if (
+          Math.max(...xs) === Math.min(...xs) ||
+          Math.max(...ys) === Math.min(...ys)
+        )
+          continue;
+        images.push({
+          bytes,
+          x: Math.min(...xs),
+          y: Math.min(...ys),
+          width: Math.max(...xs) - Math.min(...xs),
+          height: Math.max(...ys) - Math.min(...ys),
+        });
+      }
     } finally {
       canvas.width = canvas.height = 0;
     }

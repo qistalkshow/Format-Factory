@@ -4,6 +4,8 @@ import { type Element } from '@xmldom/xmldom';
 import { openOffice, xml, childElements, elements } from './archive';
 import { OFFICE_LIMITS, type Block } from './model';
 import { flowPdf } from './pdf-office-layout';
+import { inlineText } from './inline-text';
+import { docxPage } from './docx-page';
 export async function docxPdf(file: Blob, progress: (p: number) => void) {
   const archive = await openOffice(file, 'docx');
   if (
@@ -20,6 +22,8 @@ export async function docxPdf(file: Blob, progress: (p: number) => void) {
     {
       includeEmbeddedStyleMap: false,
       externalFileAccess: false,
+      // Mammoth 預設忽略底線；明確保留成惰性 HTML 標記供 Worker 繪製。
+      styleMap: ['u => u'],
       convertImage: mammoth.images.imgElement(async (image) => {
         if (
           !['image/png', 'image/jpeg'].includes(image.contentType) ||
@@ -72,7 +76,12 @@ export async function docxPdf(file: Blob, progress: (p: number) => void) {
           .filter((c) => ['td', 'th'].includes(c.localName ?? ''))
           .map((c) => c.textContent ?? ''),
       );
-      blocks.push({ kind: 'table', rows });
+      const runs = elements(element, 'tr').map((tr) =>
+        childElements(tr)
+          .filter((c) => ['td', 'th'].includes(c.localName ?? ''))
+          .map((c) => inlineText(c)),
+      );
+      blocks.push({ kind: 'table', rows, runs });
       for (const img of elements(element, 'img')) walk(img, depth + 1);
       return;
     }
@@ -88,6 +97,10 @@ export async function docxPdf(file: Blob, progress: (p: number) => void) {
             ? Math.max(14, 26 - Number(tag[1]) * 2)
             : 12,
           bold: tag.startsWith('h'),
+          runs: [
+            ...(tag === 'li' ? [{ text: '• ' }] : []),
+            ...inlineText(element),
+          ],
         });
       for (const img of elements(element, 'img')) walk(img, depth + 1);
       return;
@@ -98,5 +111,5 @@ export async function docxPdf(file: Blob, progress: (p: number) => void) {
   }
   walk(body);
   progress(0.3);
-  return flowPdf(blocks, progress);
+  return flowPdf(blocks, progress, docxPage(archive));
 }

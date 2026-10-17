@@ -7,7 +7,8 @@ import {
   childElements,
   relationships,
 } from './archive';
-import { OFFICE_LIMITS } from './model';
+import { OFFICE_LIMITS, type InlineText } from './model';
+import { styledLines, drawStyledLine } from './inline-text';
 import { canvasPdfPage, wrapText } from './pdf-office-layout';
 import { officeBitmap } from './bitmap';
 const relation = (node: Element, name: string) =>
@@ -195,9 +196,40 @@ export async function pptxPdf(file: Blob, progress: (p: number) => void) {
               ctx.font = `${style?.getAttribute('b') === '1' ? 'bold ' : ''}${fontSize}px sans-serif`;
               ctx.fillStyle = color(style, '#111111');
               ctx.textBaseline = 'top';
-              for (const line of wrapText(ctx, text, Math.max(1, b.w - 8))) {
+              const fallback = elements(paragraph, 'defRPr')[0];
+              const runs: InlineText[] = childElements(paragraph)
+                .filter((run) =>
+                  ['r', 'fld', 'br'].includes(run.localName ?? ''),
+                )
+                .map((run) => {
+                  const properties = elements(run, 'rPr')[0];
+                  const attr = (name: string) =>
+                    properties?.getAttribute(name) ??
+                    fallback?.getAttribute(name);
+                  const baseline = Number(attr('baseline') ?? 0);
+                  return {
+                    text:
+                      run.localName === 'br'
+                        ? '\n'
+                        : elements(run, 't')
+                            .map((t) => t.textContent ?? '')
+                            .join(''),
+                    bold: attr('b') === '1',
+                    italic: attr('i') === '1',
+                    underline: Boolean(attr('u') && attr('u') !== 'none'),
+                    script:
+                      baseline > 0 ? 'sup' : baseline < 0 ? 'sub' : undefined,
+                    color: color(properties, color(fallback, '#111111')),
+                  };
+                });
+              for (const line of styledLines(
+                ctx,
+                runs.length ? runs : [{ text }],
+                fontSize,
+                Math.max(1, b.w - 8),
+              )) {
                 if (y + fontSize > b.h) throw new Error('officeUnsupported');
-                ctx.fillText(line, 4, y);
+                drawStyledLine(ctx, line, 4, y, fontSize);
                 y += fontSize * 1.2;
               }
             }

@@ -68,6 +68,15 @@ test('M4 prepared engines export Office and PDF after the server closes', async 
         unzipSync(await download(page, /下載 DOCX/))['word/document.xml'],
       ),
     ).toContain('Alpha');
+    await page.getByLabel('Word 版面模式').selectOption('appearance');
+    await run(page);
+    const appearance = unzipSync(await download(page, /下載 DOCX/));
+    expect(
+      Object.keys(appearance).some((path) =>
+        /^word\/media\/.*\.png$/.test(path),
+      ),
+    ).toBe(true);
+    expect(strFromU8(appearance['word/document.xml'])).toContain('<wp:anchor ');
     expect(external).toEqual([]);
     expect(
       await page.locator('html').getAttribute('data-office-csp'),

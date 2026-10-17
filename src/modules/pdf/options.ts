@@ -16,6 +16,7 @@ export interface PdfOptions {
   selected: number[];
   preset: 'low' | 'medium' | 'high';
   password: string;
+  docxMode: 'editable' | 'appearance';
 }
 export const pdfDefaults: PdfOptions = {
   splitMode: 'range',
@@ -24,6 +25,7 @@ export const pdfDefaults: PdfOptions = {
   selected: [],
   preset: 'medium',
   password: '',
+  docxMode: 'editable',
 };
 export function parsePdfOptions(value: unknown): PdfOptions {
   if (!value || typeof value !== 'object') throw new Error('options');
@@ -31,6 +33,7 @@ export function parsePdfOptions(value: unknown): PdfOptions {
   if (
     !['range', 'every', 'selected'].includes(o.splitMode) ||
     !['low', 'medium', 'high'].includes(o.preset) ||
+    !['editable', 'appearance'].includes(o.docxMode) ||
     typeof o.ranges !== 'string' ||
     o.ranges.length > 4096 ||
     !Number.isInteger(o.every) ||

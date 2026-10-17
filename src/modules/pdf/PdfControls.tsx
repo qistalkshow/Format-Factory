@@ -72,6 +72,23 @@ export function PdfControls({
         </select>
       </label>
       <p>{office ? t.officeTier : t.tier}</p>
+      {s.operation === 'docx' && (
+        <label>
+          {t.docxMode}
+          <select
+            value={s.options.docxMode}
+            onChange={(e) =>
+              change({
+                docxMode: e.currentTarget.value as PdfOptions['docxMode'],
+              })
+            }
+          >
+            <option value="editable">{t.docxEditable}</option>
+            <option value="appearance">{t.docxAppearance}</option>
+          </select>
+          <span>{t.docxModeHint}</span>
+        </label>
+      )}
       {office ? (
         <>
           <p class="notice">{fromOffice ? t.officeImport : t.officeExport}</p>

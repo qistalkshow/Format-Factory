@@ -1,6 +1,8 @@
 import { officeBitmap } from './bitmap';
 import { PDFDocument } from 'pdf-lib';
 import { OFFICE_LIMITS, guardBlocks, type Block } from './model';
+import { styledLines, drawStyledLine } from './inline-text';
+import type { FlowPage } from './docx-page';
 export function wrapText(
   ctx: OffscreenCanvasRenderingContext2D,
   text: string,
@@ -37,25 +39,34 @@ export async function canvasPdfPage(
 export async function flowPdf(
   blocks: Block[],
   progress: (p: number) => void,
+  layout: FlowPage = {
+    width: 595,
+    height: 842,
+    left: 42,
+    right: 42,
+    top: 42,
+    bottom: 42,
+  },
 ): Promise<Blob> {
   guardBlocks(blocks);
   if (typeof OffscreenCanvas === 'undefined') throw new Error('browser');
   const pdf = await PDFDocument.create(),
-    canvas = new OffscreenCanvas(1190, 1684),
+    canvas = new OffscreenCanvas(
+      Math.ceil(layout.width * 2),
+      Math.ceil(layout.height * 2),
+    ),
     ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('browser');
-  const width = 595,
-    height = 842,
-    margin = 42,
-    usable = width - margin * 2;
-  let y = margin,
+  const { width, height, left: margin, top, bottom } = layout,
+    usable = width - margin - layout.right;
+  let y = top,
     drawn = false;
   function reset() {
     ctx!.setTransform(2, 0, 0, 2, 0, 0);
     ctx!.fillStyle = '#ffffff';
     ctx!.fillRect(0, 0, width, height);
     ctx!.textBaseline = 'top';
-    y = margin;
+    y = top;
     drawn = false;
   }
   const flush = async () => {
@@ -63,7 +74,7 @@ export async function flowPdf(
     reset();
   };
   const space = async (h: number) => {
-    if (y + h > height - margin) await flush();
+    if (y + h > height - bottom) await flush();
   };
   reset();
   try {
@@ -71,13 +82,17 @@ export async function flowPdf(
       if (block.kind === 'break') await flush();
       if (block.kind === 'text') {
         const size = Math.max(9, Math.min(28, block.size ?? 12));
-        ctx.font = `${block.bold ? 'bold ' : ''}${size}px sans-serif`;
-        const lines = wrapText(ctx, block.text, usable);
+        const lines = styledLines(
+          ctx,
+          block.runs ?? [{ text: block.text }],
+          size,
+          usable,
+          block.bold,
+        );
         for (const line of lines) {
           await space(size * 1.45);
-          ctx.font = `${block.bold ? 'bold ' : ''}${size}px sans-serif`;
           ctx.fillStyle = '#111111';
-          ctx.fillText(line, margin, y);
+          drawStyledLine(ctx, line, margin, y, size);
           y += size * 1.45;
           drawn = true;
         }
@@ -90,14 +105,25 @@ export async function flowPdf(
           if (start) await flush();
           const count = Math.min(6, columns - start),
             cw = usable / count;
-          for (const row of block.rows) {
+          for (const [rowIndex, row] of block.rows.entries()) {
             ctx.font = '10px sans-serif';
             const cells = Array.from({ length: count }, (_, i) =>
-              wrapText(ctx, row[start + i] ?? '', cw - 10),
+              styledLines(
+                ctx,
+                block.runs?.[rowIndex]?.[start + i] ?? [
+                  { text: row[start + i] ?? '' },
+                ],
+                10,
+                cw - 10,
+              ),
             );
             const lineCount = Math.max(1, ...cells.map((c) => c.length));
-            for (let line = 0; line < lineCount; line += 40) {
-              const visible = Math.min(40, lineCount - line),
+            const perPage = Math.max(
+              1,
+              Math.floor((height - top - bottom - 10) / 14),
+            );
+            for (let line = 0; line < lineCount; line += perPage) {
+              const visible = Math.min(perPage, lineCount - line),
                 rh = visible * 14 + 10;
               await space(rh);
               ctx.font = '10px sans-serif';
@@ -109,7 +135,13 @@ export async function flowPdf(
                 cells[col]
                   .slice(line, line + visible)
                   .forEach((text, k) =>
-                    ctx.fillText(text, margin + col * cw + 5, y + 5 + k * 14),
+                    drawStyledLine(
+                      ctx,
+                      text,
+                      margin + col * cw + 5,
+                      y + 5 + k * 14,
+                      10,
+                    ),
                   );
               }
               y += rh;
@@ -129,7 +161,7 @@ export async function flowPdf(
           const scale = Math.min(
               1,
               usable / image.width,
-              (height - margin * 2) / image.height,
+              (height - top - bottom) / image.height,
             ),
             w = image.width * scale,
             h = image.height * scale;

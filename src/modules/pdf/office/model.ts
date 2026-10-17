@@ -20,15 +20,33 @@ export interface TextCell {
   width: number;
   size: number;
   bold?: boolean;
+  italic?: boolean;
+  underline?: boolean;
+  font?: string;
+  runs?: TextCell[];
 }
 export interface TextLine {
   cells: TextCell[];
   y: number;
   size: number;
 }
+export interface InlineText {
+  text: string;
+  color?: string;
+  bold?: boolean;
+  italic?: boolean;
+  underline?: boolean;
+  script?: 'sup' | 'sub';
+}
 export type Block =
-  | { kind: 'text'; text: string; size?: number; bold?: boolean }
-  | { kind: 'table'; rows: string[][] }
+  | {
+      kind: 'text';
+      text: string;
+      size?: number;
+      bold?: boolean;
+      runs?: InlineText[];
+    }
+  | { kind: 'table'; rows: string[][]; runs?: InlineText[][][] }
   | { kind: 'image'; bytes: Uint8Array; mime: string }
   | { kind: 'break' };
 export function textLines(items: TextCell[]): TextLine[] {
@@ -47,12 +65,38 @@ export function textLines(items: TextCell[]): TextLine[] {
       last.cells.push(item);
     else lines.push({ cells: [item], y: item.y, size: item.size });
   }
+  // 較小且緊鄰正文的升降基線視為同一行；不跨越欄間距離合併。
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const neighbor = [lines[i - 1], lines[i + 1]].find(
+      (candidate) =>
+        candidate &&
+        line.size < candidate.size * 0.85 &&
+        Math.abs(line.y - candidate.y) <= candidate.size * 0.7 &&
+        line.cells.every((a) =>
+          candidate.cells.some(
+            (b) =>
+              Math.max(a.x - b.x - b.width, b.x - a.x - a.width) <=
+              candidate.size,
+          ),
+        ),
+    );
+    if (neighbor) {
+      neighbor.cells.push(...line.cells);
+      lines.splice(i--, 1);
+    }
+  }
   for (const line of lines) {
     const cells: TextCell[] = [];
     for (const cell of line.cells.sort((a, b) => a.x - b.x)) {
       const last = cells.at(-1),
         gap = last ? cell.x - last.x - last.width : Infinity;
       if (last && gap < Math.max(12, cell.size * 1.4)) {
+        last.runs ??= [{ ...last }];
+        last.runs.push({
+          ...cell,
+          text: (gap > cell.size * 0.15 ? ' ' : '') + cell.text,
+        });
         last.text += (gap > cell.size * 0.15 ? ' ' : '') + cell.text;
         last.width = Math.max(last.width, cell.x + cell.width - last.x);
       } else cells.push({ ...cell });

@@ -16,7 +16,7 @@ export async function processOffice(
     let blob: Blob;
     if (action === 'docx') {
       const { pdfDocx } = await import('./pdf-office-docx');
-      blob = await pdfDocx(file, options.password, notify);
+      blob = await pdfDocx(file, options.password, notify, options.docxMode);
     } else if (action === 'xlsx') {
       const { pdfXlsx } = await import('./pdf-office-xlsx');
       blob = await pdfXlsx(file, options.password, notify);
