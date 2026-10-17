@@ -1,6 +1,6 @@
 export const helpZh = {
   help: '使用說明',
-  retry: '重新載入工具',
+  retry: '重新整理（需重新選檔）',
   reset: '清除工作並返回首頁',
   unexpected:
     '工具發生未預期錯誤。請清除工作後，改用較小的檔案重試。檔案不會上傳。',
@@ -36,7 +36,7 @@ export const helpZh = {
 };
 export const helpEn: typeof helpZh = {
   help: 'Help',
-  retry: 'Reload tools',
+  retry: 'Reload page (select files again)',
   reset: 'Clear work and return home',
   unexpected:
     'An unexpected tool error occurred. Clear this work and retry with a smaller file. Files are never uploaded.',

@@ -26,7 +26,6 @@ export function App() {
   const heading = useRef<HTMLHeadingElement>(null);
   const first = useRef(true);
   const workspaceRegion = useRef<HTMLDivElement>(null);
-  const [attempt, setAttempt] = useState(0);
   const offline = useOffline();
   const selectFiles = (input: File[]) => {
     if (!input.length) return;
@@ -81,7 +80,7 @@ export function App() {
     return () => {
       active = false;
     };
-  }, [activeModule, Workspace, attempt]);
+  }, [activeModule, Workspace]);
   useEffect(() => {
     if (Workspace && page === 'home') workspaceRegion.current?.focus();
   }, [Workspace]);
@@ -146,12 +145,7 @@ export function App() {
             <p role="alert" class="notice">
               {t[error]}
               {error === 'failed' && (
-                <button
-                  onClick={() => {
-                    setError(undefined);
-                    setAttempt(attempt + 1);
-                  }}
-                >
+                <button onClick={() => window.location.reload()}>
                   {t.retry}
                 </button>
               )}

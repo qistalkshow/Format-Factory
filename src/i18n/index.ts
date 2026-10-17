@@ -30,7 +30,8 @@ export const zh = {
   system: '跟隨系統',
   language: '介面語言',
   limit: '一次最多 20 個檔案、合計 128 MiB。請減少檔案後重試。',
-  failed: '工具載入失敗。請連線後重新整理再試。',
+  failed:
+    '工具載入失敗。請連線後重新整理再試；若仍失敗，請關閉所有本站分頁後重新開啟，必要時重新啟動瀏覽器。需重新選檔。',
   loading: '正在載入工具',
   offlineReady: '基礎離線資源已就緒',
   offlineLoading: '正在準備離線資源',
@@ -73,7 +74,8 @@ export const en: Messages = {
   language: 'Language',
   limit:
     'Select at most 20 files totaling 128 MiB. Remove some files and retry.',
-  failed: 'Tools could not load. Reconnect and reload.',
+  failed:
+    'Tools could not load. Reconnect and reload. If this persists, close all site tabs and reopen, or restart the browser. Select your files again.',
   loading: 'Loading tools',
   offlineReady: 'Core offline assets ready',
   offlineLoading: 'Preparing offline assets',

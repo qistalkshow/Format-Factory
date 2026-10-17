@@ -89,6 +89,44 @@ test('M5 themes meet text and control contrast; small viewport respects reduced 
 
 test.describe('M5 rendering failure recovery', () => {
   test.use({ serviceWorkers: 'block' });
+  test('M5 failed module download provides reload or explicit browser recovery', async ({
+    page,
+    browserName,
+  }) => {
+    let requests = 0;
+    let blocked = true;
+    await page.route('**/assets/PdfWorkspace-*.js', (route) => {
+      requests++;
+      return blocked
+        ? route.fulfill({
+            status: 503,
+            headers: { 'Cache-Control': 'no-store' },
+            body: 'test outage',
+          })
+        : route.continue();
+    });
+    await page.goto('./');
+    await page.getByRole('button', { name: /PDF 開啟/ }).click();
+    await expect(page.getByRole('alert')).toContainText('工具載入失敗');
+    blocked = false;
+    await Promise.all([
+      page.waitForEvent('load'),
+      page.getByRole('button', { name: '重新整理（需重新選檔）' }).click(),
+    ]);
+    await page.getByRole('button', { name: /PDF 開啟/ }).click();
+    const workspace = page.getByRole('heading', { name: 'PDF 工作區' });
+    await expect(workspace.or(page.getByRole('alert'))).toBeVisible();
+    if (await workspace.isVisible()) expect(requests).toBeGreaterThanOrEqual(2);
+    else {
+      // Windows WebKit 會跨重新整理保留失敗的模組；驗證明確的重開提示。
+      expect(browserName).toBe('webkit');
+      await expect(page.getByRole('alert')).toContainText('關閉所有本站分頁');
+      await page.getByRole('button', { name: '使用說明', exact: true }).click();
+      await expect(
+        page.getByRole('heading', { name: '三個步驟' }),
+      ).toBeVisible();
+    }
+  });
   test('M5 a broken tool retains the shell and can be cleared', async ({
     page,
   }) => {
