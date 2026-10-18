@@ -1,5 +1,5 @@
 import { availablePdfOperations, isOfficeOperation } from './actions';
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useLayoutEffect, useState } from 'preact/hooks';
 import type { Locale } from '@/i18n';
 import { pdfMessages, pdfError } from '@/i18n/pdf';
 import { formatSize } from '@/core/format-size';
@@ -22,12 +22,12 @@ export default function PdfWorkspace({
   useEffect(() => {
     if (input.length) {
       onClear();
-      setAck(false);
     }
   }, [input]);
-  useEffect(() => {
+  // 在新選項可互動前重設，避免延後的 effect 取消使用者剛勾選的確認。
+  useLayoutEffect(() => {
     setAck(false);
-  }, [s.operation]);
+  }, [s.operation, s.files]);
   useEffect(() => {
     const controller = new AbortController();
     void fetch(`${import.meta.env.BASE_URL}pdf-assets.json`, {

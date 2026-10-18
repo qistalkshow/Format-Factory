@@ -43,3 +43,27 @@ test('PDF images are anchored before editable text on every dense source page', 
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   });
 });
+
+test('PDF quality acknowledgement stays checked after changing operation', async ({
+  page,
+}) => {
+  await page.goto('./');
+  await files(page, ['office-source.pdf']);
+  const choice = page.getByLabel('PDF 處理動作', { exact: true });
+  const acknowledgement = page.getByLabel('我了解 Tier 2');
+  for (const operation of ['docx', 'xlsx', 'docx', 'xlsx']) {
+    await choice.selectOption(operation);
+    await expect(acknowledgement).not.toBeChecked();
+    await acknowledgement.check();
+    await page.evaluate(
+      () =>
+        new Promise<void>((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+        ),
+    );
+    await expect(acknowledgement).toBeChecked();
+    await expect(
+      page.getByRole('button', { name: '開始 PDF 處理', exact: true }),
+    ).toBeEnabled();
+  }
+});
