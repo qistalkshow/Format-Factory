@@ -109,9 +109,9 @@ export async function pageImages(
             ),
           );
       }
-      image = await new Promise<PdfImage>((resolve) =>
-        page.objs.get(id, resolve),
-      );
+      // PDF.js 會把跨頁共用圖片放進 commonObjs，不能在單頁池無限等待。
+      const pool = id.startsWith('g_') ? page.commonObjs : page.objs;
+      image = await new Promise<PdfImage>((resolve) => pool.get(id, resolve));
     } else if (list.fnArray[i] === ops.paintInlineImageXObject)
       image = list.argsArray[i][0] as PdfImage;
     if (!image) continue;

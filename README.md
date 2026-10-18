@@ -212,3 +212,11 @@ PDF → DOCX 提供「Word 版面模式」：
 - PDF 離線資源最多同時下載 4 個，影音最多 2 個；下載時逐塊讀取，避免額外保留完整 WASM 副本。開始下載前驗證整份清單皆為本站路徑；失敗或取消會停止其餘下載。轉換佇列仍只執行一個重任務。
 
 新增 `numfmt 4.0.1`，用於 Excel 數字格式，MIT、無執行期相依／安裝腳本，純本機執行。完整瀏覽器 ESM gzip 46,534 B；實際 tree-shaking 後含轉換程式的 XLSX 匯入 chunk gzip 34,103 B，僅按需載入。詳見 [官方文件](https://github.com/borgar/numfmt) 與 THIRD_PARTY_LICENSES.md。沒有新增 WASM 或遠端服務。
+
+### 可編輯 DOCX 圖片錨點修正（2026-10-18）
+
+圖片的絕對頁面座標並不足以固定所在頁：Word 仍會讓圖片與其錨點段落保持同頁。原轉換器將圖片段落放在正文末尾，正文溢頁時圖片也跟著移頁。現在每個來源 PDF 頁面以頁首的獨立、極小段落承載所有圖片錨點，鎖定錨點並保留原始座標／尺寸；文字仍可編輯，不改成整頁圖片。另修正 PDF.js 跨頁共用圖片應讀取 commonObjs 的問題，避免等待錯誤暫存區而卡住。
+
+自製雙頁密集測試在 Microsoft Word 中，舊錨點配置的圖片位於輸出第 2／4 頁，修正後位於各來源頁內容起點的第 1／3 頁，座標保持 x=420 pt、y=162／362 pt。這是錨點回歸測試，不代表文字分頁已完全還原：密集文字仍可能因字型／行距推定而增加頁數；刪除錨點段落或大幅重排仍會影響 Word 頁面。使用者原始 PDF 尚未提供，因此未聲稱其完整文件已通過驗收。
+
+沒有新增相依或網路資源。測試 fixture 可用 `node scripts/create-anchor-fixture.mjs` 重建；`tests/e2e/image-anchors.spec.ts` 檢查每頁圖片錨點在正文之前、座標／鎖定設定、跨頁共用圖片與可編輯文字。Word 行為依照 [Shape.Anchor 官方文件](https://learn.microsoft.com/en-us/office/vba/api/word.shape.anchor)。

@@ -148,33 +148,45 @@ export async function pdfDocx(
         cursor = lastLine.y + lastLine.size * 0.2;
       }
       // 一般未旋轉圖片保留頁面座標；剪裁、遮罩與旋轉請選保留外觀模式。
+      const images: ImageRun[] = [];
       for (const image of await pageImages(page, OPS)) {
         const { bytes } = image;
         imageBytes += bytes.length;
         if (imageBytes > OFFICE_LIMITS.expanded) throw new Error('officeLimit');
-        children.push(
+        images.push(
+          new ImageRun({
+            type: 'png',
+            data: bytes,
+            transformation: {
+              width: (image.width * 4) / 3,
+              height: (image.height * 4) / 3,
+            },
+            floating: {
+              horizontalPosition: {
+                relative: 'page',
+                offset: Math.round(image.x * 12700),
+              },
+              verticalPosition: {
+                relative: 'page',
+                offset: Math.round(image.y * 12700),
+              },
+              allowOverlap: true,
+              lockAnchor: true,
+              layoutInCell: false,
+            },
+          }),
+        );
+      }
+      if (images.length) {
+        // Word 的圖片永遠與錨點同頁；不可把錨點放在可能溢頁的正文末尾。
+        // 專用頁首段落只佔 1 twip，不隨後方正文重排，也不與標題綁定換頁。
+        children.unshift(
           new Paragraph({
-            children: [
-              new ImageRun({
-                type: 'png',
-                data: bytes,
-                transformation: {
-                  width: (image.width * 4) / 3,
-                  height: (image.height * 4) / 3,
-                },
-                floating: {
-                  horizontalPosition: {
-                    relative: 'page',
-                    offset: Math.round(image.x * 12700),
-                  },
-                  verticalPosition: {
-                    relative: 'page',
-                    offset: Math.round(image.y * 12700),
-                  },
-                  allowOverlap: true,
-                },
-              }),
-            ],
+            spacing: { before: 0, after: 0, line: 1, lineRule: 'exact' },
+            keepNext: false,
+            keepLines: false,
+            widowControl: false,
+            children: images,
           }),
         );
       }
