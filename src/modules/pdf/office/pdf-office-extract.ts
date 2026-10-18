@@ -1,6 +1,7 @@
 import type { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist';
 import { textLines, OFFICE_LIMITS, type TextLine } from './model';
 import { markUnderlines } from './pdf-underlines';
+import { originalFontFamily } from './font-family';
 interface PdfImage {
   width: number;
   height: number;
@@ -44,9 +45,7 @@ export async function pageText(
           size: Math.max(1, Math.hypot(item.transform[2], item.transform[3])),
           bold: data?.bold || /bold|black|demi/i.test(name),
           italic: data?.italic || /italic|oblique/i.test(name),
-          font: name
-            .replace(/^[A-Z]{6}\+/, '')
-            .replace(/[-,](Bold|Italic|Oblique|Regular).*/i, ''),
+          font: originalFontFamily(name),
         },
       ];
     }),

@@ -36,13 +36,13 @@
 
 ## 發布狀態
 
-使用者指定儲存庫：https://github.com/qistalkshow/Format-Factory 。初始遠端為空，GitHub 認證與管理權限已確認；本機可發布版本驗收完成。
+使用者指定儲存庫：https://github.com/Afang1105/Format-Factory 。初始遠端為空，GitHub 認證與管理權限已確認；本機可發布版本驗收完成。
 
-正式網址：https://qistalkshow.github.io/Format-Factory/ 。每次推送 main 由 [GitHub Actions](https://github.com/qistalkshow/Format-Factory/actions) 驗證並發布；應以該次執行的 deploy 結果及網站實際載入確認上線，不把本機測試當作雲端成功。
+正式網址：https://afang1105.github.io/Format-Factory/ 。每次推送 main 由 [GitHub Actions](https://github.com/Afang1105/Format-Factory/actions) 驗證並發布；應以該次執行的 deploy 結果及網站實際載入確認上線，不把本機測試當作雲端成功。
 
 ## 限制
 
-首次成功發布為提交 `4b35947` 的 [工作流程 39017618332](https://github.com/qistalkshow/Format-Factory/actions/runs/39017618332)：Linux E2E 112 項通過、12 項能力／互斥案例跳過，build 與 deploy 均成功。後續下載復原修正會由相同完整流程再次驗證；最新部署以 Actions 頁面的提交為準。
+首次成功發布為提交 `4b35947` 的 [工作流程 39017618332](https://github.com/Afang1105/Format-Factory/actions/runs/39017618332)：Linux E2E 112 項通過、12 項能力／互斥案例跳過，build 與 deploy 均成功。後續下載復原修正會由相同完整流程再次驗證；最新部署以 Actions 頁面的提交為準。
 
 - npm audit 仍有 5 moderate、0 high／critical，詳見 THIRD_PARTY_LICENSES.md；沒有以強制降版掩蓋通報。
 - Office → PDF 的圖片式簡化排版、M1–M4 格式與資源限制不變。
@@ -89,3 +89,13 @@
 本機 lint、typecheck、70 項單元測試及 build 通過；首屏 JS gzip 15,128 B、CSS 1,792 B，沒有新相依。新增跨頁圖片 E2E 並重跑 Office／離線專項；正式部署須等待 CI 全套檢查通過。回復可 revert 本次提交，無資料遷移或設定變更。
 
 首次雲端測試另發現切換 DOCX／XLSX 後，延後的 effect 會取消剛勾選的品質確認，導致開始按鈕停用。已改為在新控制項可互動前以 layout effect 重設，並同時依檔案變更重設；沒有移除品質確認門檻。新增連續切換與勾選的回歸測試。首次失敗版本未部署。
+
+## 原字型與 GitHub 帳號更名：2026-10-18
+
+透過儲存庫固定 ID 1423099229 確認新擁有者為 Afang1105；Pages API 回傳新網址 https://afang1105.github.io/Format-Factory/ ，HTTPS 開啟、workflow 部署，base path 仍為 `/Format-Factory/`。更新 Git 遠端及專案文件連結，未更改儲存庫名稱或部署架構。
+
+PDF 字型原本直接使用 PostScript 名稱，部分 Word 字型家族因此無法辨識。新增小型名稱還原表（沒有新增相依），已用本機 Windows 字型 name 表確認標楷體、Arial、Times New Roman、微軟正黑體名稱對應。未知名稱保留，不全面替換字型；不下載或嵌入字型。字型不存在時仍由 Word 代用。
+
+自製標楷體中文／英文文件經 Word 匯出 PDF，再由實際建置的轉換器轉為 DOCX。輸出的 ascii／eastAsia／hAnsi／cs 都是 DFKai-SB；Word 唯讀開啟後回報「標楷體」。原 PDF 與轉回 Word 匯出的 PDF 已渲染並目視比較。此測試只在本機快取，沒有把 Windows 字型或使用者檔案加入 fixture。
+
+lint、typecheck、71 項單元測試與 build 通過。首屏 JS gzip 15,129 B、CSS 1,792 B，預快取 59,300 B。Office 與離線回歸及正式站發布結果以此次 CI 為準。

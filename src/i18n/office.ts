@@ -4,7 +4,7 @@ export const officeZh = {
   docxEditable: '可編輯文字（推定排版）',
   docxAppearance: '保留頁面外觀（整頁圖片，文字不可編輯）',
   docxModeHint:
-    '需要維持圖片、底線與上下標外觀時，選保留頁面外觀。此模式按原頁尺寸嵌入圖片，不能直接編輯或搜尋文字，檔案可能較大。',
+    '可編輯模式預設使用可辨識的原始字型；電腦未安裝時，Word 會代用，不會下載或內嵌字型。需要維持圖片、底線與上下標外觀時，選保留頁面外觀。此模式按原頁尺寸嵌入圖片，不能直接編輯或搜尋文字，檔案可能較大。',
   xlsx: '轉為 XLSX（表格／文字）',
   'from-docx': 'DOCX → PDF（簡化排版）',
   'from-xlsx': 'XLSX → PDF（儲存格排版）',
@@ -26,7 +26,7 @@ export const officeEn: typeof officeZh = {
   docxEditable: 'Editable text (inferred layout)',
   docxAppearance: 'Preserve page appearance (page images, not editable)',
   docxModeHint:
-    'Choose page appearance to retain images, underlines and superscript/subscript appearance. Pages use their original dimensions, but text cannot be edited or searched and files may be larger.',
+    'Editable mode uses identified original font families by default; Word substitutes missing fonts. Fonts are not downloaded or embedded. Choose page appearance to retain images, underlines and superscript/subscript appearance. Pages use their original dimensions, but text cannot be edited or searched and files may be larger.',
   xlsx: 'Convert to XLSX (tables / text)',
   'from-docx': 'DOCX → PDF (simplified layout)',
   'from-xlsx': 'XLSX → PDF (cell layout)',

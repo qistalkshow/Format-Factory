@@ -10,8 +10,53 @@ import { inlineText } from '../../src/modules/pdf/office/inline-text';
 import { xml } from '../../src/modules/pdf/office/archive';
 import { docxPage } from '../../src/modules/pdf/office/docx-page';
 import { parsePdfOptions } from '../../src/modules/pdf/options';
+import { originalFontFamily } from '../../src/modules/pdf/office/font-family';
 
 describe('Office formatting regression', () => {
+  test('restores original font families and writes them for Chinese and Latin text', async () => {
+    for (const [name, expected] of [
+      ['ABCDEF+DFKaiShu-SB-Estd-BF', 'DFKai-SB'],
+      ['標楷體', '標楷體'],
+      ['ArialMT', 'Arial'],
+      ['TimesNewRomanPS-BoldMT', 'Times New Roman'],
+      ['MicrosoftJhengHeiRegular', 'Microsoft JhengHei'],
+      ['My-Original-Font', 'My-Original-Font'],
+      ['MingLiU', 'MingLiU'],
+    ])
+      expect(originalFontFamily(name)).toBe(expected);
+    expect(originalFontFamily('')).toBeUndefined();
+    const blob = await Packer.toBlob(
+      new Document({
+        sections: [
+          {
+            children: [
+              new Paragraph({
+                children: docxRuns(
+                  [
+                    {
+                      text: '中文 ABC',
+                      x: 0,
+                      y: 20,
+                      width: 100,
+                      size: 12,
+                      font: originalFontFamily('ABCDEF+DFKaiShu-SB-Estd-BF'),
+                    },
+                  ],
+                  20,
+                ),
+              }),
+            ],
+          },
+        ],
+      }),
+    );
+    const source = strFromU8(
+      unzipSync(new Uint8Array(await blob.arrayBuffer()))['word/document.xml'],
+    );
+    expect(source).toContain('w:eastAsia="DFKai-SB"');
+    expect(source).toContain('w:ascii="DFKai-SB"');
+    expect(source).toContain('w:hAnsi="DFKai-SB"');
+  });
   test('preserves mixed runs and raised/lowered small text without merging columns', async () => {
     const lines = textLines([
       { text: 'x', x: 54, y: 100, width: 8, size: 16, bold: true },

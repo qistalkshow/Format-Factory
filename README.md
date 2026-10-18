@@ -126,7 +126,7 @@ npm audit
 2. Settings → Pages 選 GitHub Actions。
 3. 推送 main；現有工作流程執行 audit、lint、typecheck、test、build／size-check、E2E，全部通過且 GPL 對應來源碼發布檢查通過後部署。
 
-部署目標為 [qistalkshow/Format-Factory](https://github.com/qistalkshow/Format-Factory)。CI 從 GITHUB_REPOSITORY 設定 `BASE_PATH=/Format-Factory/`；使用者站 `*.github.io` 使用 `/`。自訂網域需將 base 明確改為 `/`。發布狀態見 M5_VERIFICATION.md，測試通過不代表已上線。
+部署目標為 [Afang1105/Format-Factory](https://github.com/Afang1105/Format-Factory)。CI 從 GITHUB_REPOSITORY 設定 `BASE_PATH=/Format-Factory/`；使用者站 `*.github.io` 使用 `/`。自訂網域需將 base 明確改為 `/`。發布狀態見 M5_VERIFICATION.md，測試通過不代表已上線。
 
 ```powershell
 $env:BASE_PATH='/Format-Factory/'
@@ -220,3 +220,9 @@ PDF → DOCX 提供「Word 版面模式」：
 自製雙頁密集測試在 Microsoft Word 中，舊錨點配置的圖片位於輸出第 2／4 頁，修正後位於各來源頁內容起點的第 1／3 頁，座標保持 x=420 pt、y=162／362 pt。這是錨點回歸測試，不代表文字分頁已完全還原：密集文字仍可能因字型／行距推定而增加頁數；刪除錨點段落或大幅重排仍會影響 Word 頁面。使用者原始 PDF 尚未提供，因此未聲稱其完整文件已通過驗收。
 
 沒有新增相依或網路資源。測試 fixture 可用 `node scripts/create-anchor-fixture.mjs` 重建；`tests/e2e/image-anchors.spec.ts` 檢查每頁圖片錨點在正文之前、座標／鎖定設定、跨頁共用圖片與可編輯文字。Word 行為依照 [Shape.Anchor 官方文件](https://learn.microsoft.com/en-us/office/vba/api/word.shape.anchor)。
+
+### 原字型與 GitHub 改名（2026-10-18）
+
+PDF → DOCX 可編輯模式預設逐文字片段使用可辨識的原字型。PDF 子集前綴會移除，已驗證的 PostScript 名稱會還原為同一字型的家族名稱，例如 `DFKaiShu-SB-Estd-BF` → `DFKai-SB`（標楷體）、`ArialMT` → `Arial`；不認識的家族名稱保留，不統一換成預設字型。中英文與複雜文字的 Word 字型欄位均由既有 docx 引擎寫入。沒有下載、內嵌或重新發布字型；電腦缺少該字型時仍由 Word 代用，無法承諾完全相同外觀。
+
+儲存庫已確認改名為 [Afang1105/Format-Factory](https://github.com/Afang1105/Format-Factory)，新網站為 [afang1105.github.io/Format-Factory](https://afang1105.github.io/Format-Factory/)。專案 base 仍為 `/Format-Factory/`；Git 遠端與文件連結同步更新。新網域是不同 origin，舊網域的偏好與離線快取不會自動搬移，請在新網址重新準備離線資源。舊網址不保證重新導向。
